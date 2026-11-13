@@ -1,0 +1,6 @@
+# Ignore large binaries and temp files
+*.pptx
+*.pdf
+*.tmp
+__pycache__/
+rotated_pages/

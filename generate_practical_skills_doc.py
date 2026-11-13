@@ -1,0 +1,1724 @@
+# -*- coding: utf-8 -*-
+"""
+產生 115 學年度中投區實用技能學程招生簡章與分析套件：
+1. CSV 表格檔 (Excel UTF-8 BOM 格式)
+2. Markdown 深度彙編表
+3. 現代化互動式 HTML Docu-Sheet (符合右上角時間戳記規範)
+"""
+
+import os
+import csv
+import json
+
+# 資料定義：中投區各校實用技能學程招生清單
+SCHOOLS_DATA = [
+    # 臺中市公立高職
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中家事商業高級中等學校",
+        "short_name": "臺中家商",
+        "address": "臺中市東區和平街50號",
+        "dept": "烘焙食品科",
+        "cluster": "食品群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "本區分發主委學校；培育烘焙技術、西點蛋糕、麵包製作及實用證照。",
+        "certs": "烘焙食品丙級、中式麵食加工丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中家事商業高級中等學校",
+        "short_name": "臺中家商",
+        "address": "臺中市東區和平街50號",
+        "dept": "服裝製作科",
+        "cluster": "設計與家政群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "基礎打版、流行成衣製作、立體裁剪與時尚飾品打樣實務。",
+        "certs": "女裝丙級、男裝丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中家事商業高級中等學校",
+        "short_name": "臺中家商",
+        "address": "臺中市東區和平街50號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "中西餐烹調技術、飲料調製、餐桌服務與餐飲衛生安全。",
+        "certs": "中餐烹調丙級、飲料調製丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "國立",
+        "school": "國立中興大學附屬臺中高級農業職業學校",
+        "short_name": "興大附農",
+        "address": "臺中市東區臺中路283號",
+        "dept": "園藝技術科",
+        "cluster": "農業群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "精緻花卉栽培、造園景觀設計、植栽養護與植物種苗繁育技術。",
+        "certs": "造園景觀丙級、園藝丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "國立",
+        "school": "國立中興大學附屬臺中高級農業職業學校",
+        "short_name": "興大附農",
+        "address": "臺中市東區臺中路283號",
+        "dept": "烘焙食品科",
+        "cluster": "食品群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "西點、蛋糕、中式點心之烘烤與研發實務，教學設備新穎完善。",
+        "certs": "烘焙食品(麵包/西點蛋糕)丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "國立",
+        "school": "國立中興大學附屬臺中高級農業職業學校",
+        "short_name": "興大附農",
+        "address": "臺中市東區臺中路283號",
+        "dept": "烘焙食品科",
+        "cluster": "食品群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "提供夜間進修技能班，強化中西烘焙技術與創業實作技能。",
+        "certs": "烘焙食品丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "國立",
+        "school": "國立中興大學附屬臺中高級農業職業學校",
+        "short_name": "興大附農",
+        "address": "臺中市東區臺中路283號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "結合農園食材與餐飲廚藝，專注中餐、西餐、刀工與餐飲外場實務。",
+        "certs": "中餐烹調(葷/素)丙級、飲料調製丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "國立",
+        "school": "國立中興大學附屬臺中高級農業職業學校",
+        "short_name": "興大附農",
+        "address": "臺中市東區臺中路283號",
+        "dept": "觀光事務科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "導覽解說、飯店前檯接待、遊程規劃與基礎觀光日英語會話技能。",
+        "certs": "遊程規劃師、飲料調製丙級、電腦軟體應用丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中工業高級中等學校",
+        "short_name": "臺中高工",
+        "address": "臺中市南區高工路191號",
+        "dept": "機械加工科",
+        "cluster": "機械群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "CNC銑床、車床傳統與數值加工、精密量測與精密模具基礎。",
+        "certs": "車床丙級、銑床丙級、機械加工丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中工業高級中等學校",
+        "short_name": "臺中高工",
+        "address": "臺中市南區高工路191號",
+        "dept": "電腦繪圖科",
+        "cluster": "機械群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "AutoCAD、SolidWorks 2D/3D機械元件設計、逆向工程與工程圖學。",
+        "certs": "電腦輔助機械設計製圖丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中工業高級中等學校",
+        "short_name": "臺中高工",
+        "address": "臺中市南區高工路191號",
+        "dept": "電機修護科",
+        "cluster": "電機與電子群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "馬達繞線、變壓器修護、電力控制線路與自動控制元件配線檢修。",
+        "certs": "電機修護丙級、工業配線丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立臺中工業高級中等學校",
+        "short_name": "臺中高工",
+        "address": "臺中市南區高工路191號",
+        "dept": "營造技術科",
+        "cluster": "土木與建築群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "工程測量、鋼筋配紮、泥水砌磚、建築資訊建模與施工估算實務。",
+        "certs": "測量丙級、泥水砌磚丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立東勢工業高級中等學校",
+        "short_name": "東勢高工",
+        "address": "臺中市東勢區東新里東關路六段1328號",
+        "dept": "水電技術科",
+        "cluster": "電機與電子群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": True,
+        "features": "★【公立水電代表】室內水電配置、給排水自來水管裝配、電匠配線、工廠配電與照明檢修。",
+        "certs": "室內配線(屋內線路裝修)丙/乙級、自來水管配管丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立東勢工業高級中等學校",
+        "short_name": "東勢高工",
+        "address": "臺中市東勢區東新里東關路六段1328號",
+        "dept": "電腦繪圖科",
+        "cluster": "機械群",
+        "shift": "日間部(產學班)",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "結合機械製造與電腦輔助立體製圖，結合產學企業提供實習實作。",
+        "certs": "電腦輔助機械設計製圖丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立東勢工業高級中等學校",
+        "short_name": "東勢高工",
+        "address": "臺中市東勢區東新里東關路六段1328號",
+        "dept": "裝潢技術科",
+        "cluster": "設計與土木群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "木工裝潢、輕隔間施工、室內木作工法與室內裝修實務。",
+        "certs": "裝潢木工丙級、家具木工丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立沙鹿工業高級中等學校",
+        "short_name": "沙鹿高工",
+        "address": "臺中市沙鹿區中棲路303號",
+        "dept": "商用資訊科",
+        "cluster": "商業與管理群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "辦公室軟體應用、電子商務營運、網頁美編、會計資訊系統操作。",
+        "certs": "電腦軟體應用丙級/乙級、會計事務丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立沙鹿工業高級中等學校",
+        "short_name": "沙鹿高工",
+        "address": "臺中市沙鹿區中棲路303號",
+        "dept": "紡織技術科",
+        "cluster": "機械與化工群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "機能性紡織品檢驗、織造技術、電腦針織打樣與紡織機械維護。",
+        "certs": "紡織品檢驗相關證照、機械加工丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立霧峰農業工業高級中等學校",
+        "short_name": "霧峰農工",
+        "address": "臺中市霧峰區中正路1222號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "農產加工餐飲應用、特色地方菜烹調、烘焙西點與中式點心實務。",
+        "certs": "中餐烹調丙級、烘焙食品丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "市立",
+        "school": "臺中市立霧峰農業工業高級中等學校",
+        "short_name": "霧峰農工",
+        "address": "臺中市霧峰區中正路1222號",
+        "dept": "機械加工科",
+        "cluster": "機械群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "機械銲接、鉗工技術、車銑床基礎操作與模具零組件整修技術。",
+        "certs": "機械加工丙級、氣銲/電銲技術檢定"
+    },
+
+    # 臺中市私立高中職
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立青年高級中學",
+        "short_name": "青年高中",
+        "address": "臺中市大里區中湖路100號",
+        "dept": "水電技術科",
+        "cluster": "電機與電子群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": True,
+        "features": "★【水電招牌名校】日間部水電指標，融入智慧家居物聯網、太陽能光電施工、室內外配電，輔導雙乙級率極高。",
+        "certs": "室內配線(乙級/丙級)、自來水配管丙級、太陽光電設置乙/丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立青年高級中學",
+        "short_name": "青年高中",
+        "address": "臺中市大里區中湖路100號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "宴會菜餚、日式料理、西點烘焙、調飲調酒與餐飲管理實戰。",
+        "certs": "中餐烹調丙級、西餐烹調丙級、飲料調製丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立青年高級中學",
+        "short_name": "青年高中",
+        "address": "臺中市大里區中湖路100號",
+        "dept": "烘焙食品科",
+        "cluster": "食品群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "法式西點、藝術麵包、蛋糕裝飾拉糖技術與烘焙門市經營。",
+        "certs": "烘焙食品(西點/麵包)丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立青年高級中學",
+        "short_name": "青年高中",
+        "address": "臺中市大里區中湖路100號",
+        "dept": "汽車修護科",
+        "cluster": "動力機械群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "傳統引擎檢修、汽車底盤保養、電動車油電混合技術及車用電子檢測。",
+        "certs": "汽車修護丙級/乙級、機車修護丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立致用高級中學",
+        "short_name": "致用高中",
+        "address": "臺中市大甲區甲東路112號",
+        "dept": "水電技術科",
+        "cluster": "電機與電子群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": True,
+        "features": "★【海線水電基地】大甲海線水電與機電實作主力，室內配電、自來水管裝配、冷凍空調基礎，畢業就業高薪率大。",
+        "certs": "室內配線丙級/乙級、自來水管配管丙級、冷凍空調裝修丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立致用高級中學",
+        "short_name": "致用高中",
+        "address": "臺中市大甲區甲東路112號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "結合海線海鮮廚藝、中西料理、在地觀光伴手禮烘焙實作。",
+        "certs": "中餐烹調丙級、飲料調製丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立致用高級中學",
+        "short_name": "致用高中",
+        "address": "臺中市大甲區甲東路112號",
+        "dept": "汽車修護科",
+        "cluster": "動力機械群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "汽機車基礎保養、鈑金噴漆原理、診斷電腦操作實務。",
+        "certs": "汽車修護丙級、機車修護丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立僑泰高級中學",
+        "short_name": "僑泰高中",
+        "address": "臺中市大里區樹王路342號",
+        "dept": "寵物經營科",
+        "cluster": "農業與家政群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "★【熱門明星科】寵物美容造型、毛孩膳食營養、門市經營管理與獸醫助理基礎。",
+        "certs": "寵物美容丙級、水族養殖技術檢定"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立僑泰高級中學",
+        "short_name": "僑泰高中",
+        "address": "臺中市大里區樹王路342號",
+        "dept": "汽車修護科",
+        "cluster": "動力機械群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "與知名車廠產學接軌，專修底盤煞車、電腦檢測噴射引擎、電動車檢驗。",
+        "certs": "汽車修護丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立僑泰高級中學",
+        "short_name": "僑泰高中",
+        "address": "臺中市大里區樹王路342號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "異國料理、精緻烘焙、咖啡拉花調飲及外燴宴席實作。",
+        "certs": "中餐烹調丙級、西餐烹調丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立僑泰高級中學",
+        "short_name": "僑泰高中",
+        "address": "臺中市大里區樹王路342號",
+        "dept": "美顏技術科",
+        "cluster": "家政與造型群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "專業彩妝設計、新娘秘書造型、醫美護膚保養、美甲彩繪技術。",
+        "certs": "美容丙級/乙級、美甲初級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立僑泰高級中學",
+        "short_name": "僑泰高中",
+        "address": "臺中市大里區樹王路342號",
+        "dept": "美髮技術科",
+        "cluster": "家政與造型群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "男女美髮剪燙染造型、頭皮理療養護、沙龍門市實習。",
+        "certs": "男子理髮丙級、女子美髮丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立嶺東高級中學",
+        "short_name": "嶺東高中",
+        "address": "臺中市南屯區嶺東路2號",
+        "dept": "汽車修護科",
+        "cluster": "動力機械群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "結合精密工業與智慧車輛診斷，傳動系統檢修、電機電子控制系統。",
+        "certs": "汽車修護丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立嶺東高級中學",
+        "short_name": "嶺東高中",
+        "address": "臺中市南屯區嶺東路2號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "中西式料理刀工、精緻外燴烘焙、咖啡拉花與餐飲外場營運。",
+        "certs": "中餐烹調丙級、飲料調製丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立明台高級中學",
+        "short_name": "明台高中",
+        "address": "臺中市霧峰區萊園路91號",
+        "dept": "寵物經營科",
+        "cluster": "農業與家政群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "霧峰林家花園古蹟校園，寵物美容造型、訓犬照護、寵物手作點心。",
+        "certs": "寵物美容丙級、水族養殖檢定"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立明台高級中學",
+        "short_name": "明台高中",
+        "address": "臺中市霧峰區萊園路91號",
+        "dept": "烘焙食品科",
+        "cluster": "食品群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "藍帶主廚教學模式，歐式麵包、翻糖蛋糕、中西甜品創新研發。",
+        "certs": "烘焙食品丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立明台高級中學",
+        "short_name": "明台高中",
+        "address": "臺中市霧峰區萊園路91號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "台菜、粵菜、義法料理實作，宴會餐飲規劃與國際餐旅禮儀。",
+        "certs": "中餐烹調丙級、西餐烹調丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立明台高級中學",
+        "short_name": "明台高中",
+        "address": "臺中市霧峰區萊園路91號",
+        "dept": "美顏技術科",
+        "cluster": "家政與造型群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "特效化妝、影視彩妝、美甲美睫、個人形象色彩診斷實務。",
+        "certs": "美容丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立明台高級中學",
+        "short_name": "明台高中",
+        "address": "臺中市霧峰區萊園路91號",
+        "dept": "表演技術科",
+        "cluster": "藝術群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "肢體開發、舞台戲劇、流行街舞、歌唱主持及網紅自媒體影音企劃。",
+        "certs": "街舞教練證、自媒體影音剪輯認證"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立慈明高級中學",
+        "short_name": "慈明高中",
+        "address": "臺中市太平區光德路388號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "大里太平地區餐旅基地，素食廚藝、西式餐飲、精緻調酒與餐桌服務。",
+        "certs": "中餐烹調(葷/素)丙級、飲料調製丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立慈明高級中學",
+        "short_name": "慈明高中",
+        "address": "臺中市太平區光德路388號",
+        "dept": "美顏技術科",
+        "cluster": "家政與造型群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "整體時尚彩妝、新娘造型、美容護膚SPA與芳香療法應用。",
+        "certs": "美容丙級/乙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立大明高級中學",
+        "short_name": "大明高中",
+        "address": "臺中市大里區益民路一段400號",
+        "dept": "商用資訊科",
+        "cluster": "商業與管理群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "數位商務、電商社群行銷、辦公室軟體整合及美工圖文處理。",
+        "certs": "電腦軟體應用丙級、會計事務丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立嘉陽高級中學",
+        "short_name": "嘉陽高中",
+        "address": "臺中市清水區中清路八段1號",
+        "dept": "飛機修護科",
+        "cluster": "動力機械群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "鄰近清泉崗機場，飛機機體結構維修、發動機檢測、航空地勤設備實務。",
+        "certs": "飛機修護丙級、機械加工丙級"
+    },
+    {
+        "district": "臺中市",
+        "type": "私立",
+        "school": "臺中市私立嘉陽高級中學",
+        "short_name": "嘉陽高中",
+        "address": "臺中市清水區中清路八段1號",
+        "dept": "汽車修護科",
+        "cluster": "動力機械群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "汽機車基礎保養、鈑金噴漆原理、診斷電腦操作實務。",
+        "certs": "汽車修護丙級、機車修護丙級"
+    },
+
+    # 南投縣公立高職
+    {
+        "district": "南投縣",
+        "type": "國立",
+        "school": "國立埔里高級工業職業學校",
+        "short_name": "埔里高工",
+        "address": "南投縣埔里鎮中山路一段435號",
+        "dept": "電腦繪圖科",
+        "cluster": "機械群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "2D/3D機械元件設計製圖、3D列印快速成形、精密機構公差標註。",
+        "certs": "電腦輔助機械設計製圖丙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "國立",
+        "school": "國立埔里高級工業職業學校",
+        "short_name": "埔里高工",
+        "address": "南投縣埔里鎮中山路一段435號",
+        "dept": "微電腦修護科",
+        "cluster": "電機與電子群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "電腦硬體裝修、區域網路架設、微控制器單晶片電路應用實作。",
+        "certs": "電腦硬體裝修丙級、網路架設丙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "國立",
+        "school": "國立埔里高級工業職業學校",
+        "short_name": "埔里高工",
+        "address": "南投縣埔里鎮中山路一段435號",
+        "dept": "化工技術科",
+        "cluster": "化工群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "南投唯一實用技能化工科，化學檢驗滴定、化妝保養品調製、環保檢測。",
+        "certs": "化學乙/丙級、化工丙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "國立",
+        "school": "國立水里高級商工職業學校",
+        "short_name": "水里商工",
+        "address": "南投縣水里鄉南湖路2號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "結合日月潭水里觀光休閒產業，茶飲文化、原民特色料理、餐旅外場服務。",
+        "certs": "中餐烹調丙級、飲料調製丙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "國立",
+        "school": "國立草屯高級商業職業學校",
+        "short_name": "草屯商工",
+        "address": "南投縣草屯鎮墩煌路三段188號",
+        "dept": "商用資訊科",
+        "cluster": "商業與管理群",
+        "shift": "日間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "草屯商管重心，商業套裝軟體應用、資料庫建置、門市服務與網路行銷。",
+        "certs": "電腦軟體應用丙級、會計事務丙級、門市服務丙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "國立",
+        "school": "國立草屯高級商業職業學校",
+        "short_name": "草屯商工",
+        "address": "南投縣草屯鎮墩煌路三段188號",
+        "dept": "機械加工科",
+        "cluster": "機械群",
+        "shift": "夜間部",
+        "quota": 35,
+        "is_water_electric": False,
+        "features": "金屬切削、機械鉗工配管基礎操作、工廠安全與量測技術。",
+        "certs": "機械加工丙級、車床丙級"
+    },
+
+    # 南投縣私立高職
+    {
+        "district": "南投縣",
+        "type": "私立",
+        "school": "南投縣私立同德高級中等學校",
+        "short_name": "同德高中",
+        "address": "南投縣草屯鎮中正路培英巷8號",
+        "dept": "餐飲技術科",
+        "cluster": "餐旅群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "頂級餐旅教學大樓，國宴級名廚師資，中西餐廚藝、精緻點心及宴會規劃。",
+        "certs": "中餐烹調丙級、西餐烹調丙級、中式麵食加工丙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "私立",
+        "school": "南投縣私立同德高級中等學校",
+        "short_name": "同德高中",
+        "address": "南投縣草屯鎮中正路培英巷8號",
+        "dept": "烘焙食品科",
+        "cluster": "食品群",
+        "shift": "日間部",
+        "quota": 45,
+        "is_water_electric": False,
+        "features": "專業歐式麵包窯烤、巧克力精緻拉花、法式甜品工藝大師班。",
+        "certs": "烘焙食品(麵包/西點蛋糕)丙級/乙級"
+    },
+    {
+        "district": "南投縣",
+        "type": "私立",
+        "school": "南投縣私立同德高級中等學校",
+        "short_name": "同德高中",
+        "address": "南投縣草屯鎮中正路培英巷8號",
+        "dept": "美顏技術科",
+        "cluster": "家政與造型群",
+        "shift": "日間部",
+        "quota": 40,
+        "is_water_electric": False,
+        "features": "時尚新秘造型、彩繪光療美甲、舞台噴槍彩妝、美容美體精油按摩。",
+        "certs": "美容丙級/乙級、女子美髮丙級"
+    }
+]
+
+# 水電科專區詳細分析資料
+WATER_ELECTRIC_SCHOOLS = [
+    {
+        "school": "臺中市私立青年高級中學",
+        "dept": "水電技術科 (日間部)",
+        "district": "臺中市大里區",
+        "nature": "私立技術型高中 (日間部重點招牌科)",
+        "quota": "核定 1 班 (45名)",
+        "curriculum_highlights": [
+            "室內配線 (屋內線路) 實務：單相/三相配電箱規劃、漏電斷路、PVC/金屬管彎管配線",
+            "自來水管配管：給排水PVC管、鑄鐵管、水龍頭衛浴配件裝配與水壓測試",
+            "太陽光電模組設置實務：太陽能支架架設、逆變器Inverter接線、市電併聯",
+            "智慧居家IoT弱電系統：智慧插座開關、網路監控攝影機架設、智慧門鎖控制",
+            "工業配線與可程式邏輯控制 (PLC) 基礎控制電路設計"
+        ],
+        "licenses": [
+            "室內配線 (乙級/丙級，俗稱甲種/乙種電匠)",
+            "自來水管配管 (丙級)",
+            "太陽光電設置 (乙級/丙級)",
+            "網路架設 (丙級)"
+        ],
+        "industry_cooperation": "與中部大台中自來水管閥公會、機電工程顧問公司、大水電承裝業產學接軌，寒暑假實習與保證就業。",
+        "advantages": "★ 中投區唯一全日制專精輔導『水電雙乙級』的指標學校，歷年升學科技大學（勤益、虎尾、雲科）與考取甲乙種電匠成效斐然。"
+    },
+    {
+        "school": "臺中市私立致用高級中學",
+        "dept": "水電技術科 (日間部)",
+        "district": "臺中市大甲區",
+        "nature": "私立綜合/技術高中 (海線大甲水電培訓重鎮)",
+        "quota": "核定 1 班 (45名)",
+        "curriculum_highlights": [
+            "實用室內水電裝修：居家水電緊急搶修、照明配線迴路計算、用電負載平衡",
+            "自來水管給排水實務：自來水管延展、落水頭按裝、給水加壓馬達安裝與維護",
+            "冷凍空調基礎：分離式冷氣安裝配管、冷媒測漏抽真空、窗型冷氣清洗檢修",
+            "電動機修護與工業配電盤組裝實務",
+            "工廠自動化感測器接線實務"
+        ],
+        "licenses": [
+            "室內配線 (丙級/乙級)",
+            "自來水管配管 (丙級)",
+            "冷凍空調裝修 (丙級)",
+            "工業配線 (丙級)"
+        ],
+        "industry_cooperation": "深耕台中海線（大甲、清水、沙鹿、梧棲）及幼獅工業區機電水電廠商，提供在地工讀與技師養成職缺。",
+        "advantages": "★ 結合『水電配線 + 給排水 + 冷凍空調』三效合一技能，學生一畢業即具備獨立接案與室內裝修水電統包能力。"
+    },
+    {
+        "school": "臺中市立東勢工業高級中等學校",
+        "dept": "水電技術科 (夜間部 / 進修部)",
+        "district": "臺中市東勢區",
+        "nature": "市立技術型高級中等學校 (公立工科體系)",
+        "quota": "核定 1 班 (35名)",
+        "curriculum_highlights": [
+            "公立嚴謹工科基礎：電機基本電學、電工儀表操作、配電盤線路規劃",
+            "室內屋內線路裝修實作：配合國家檢定場規格之完整配線練習",
+            "自來水管冷熱水給水管裝配技術：熱融管、金屬管及排水管坡度施作",
+            "照明配電節能改善實務、工廠高低壓設備基礎認識",
+            "夜間上課模式：白天可於水電水暖公司半工半讀積累現場年資"
+        ],
+        "licenses": [
+            "室內配線 (屋內線路裝修) 丙級 / 乙級",
+            "自來水管配管 (丙級)"
+        ],
+        "industry_cooperation": "結合市立東勢高工完善合格國家級檢定場地，結合在地機電水電工會與師傅學徒網絡支援。",
+        "advantages": "★ 中投區唯一的公立水電技術科！享有公立學校極致低廉學費優勢與完整國家檢定工場設施，適合白天有工作需求或半工半讀的實用型青年。"
+    }
+]
+
+# 招生日程
+TIMELINE = [
+    {"stage": "簡章審定與發布", "date": "115年1月15日", "desc": "教育部臺教授國字第1155400269A號函核定，主辦學校（臺中家商）正式上網公告簡章與招生科班名額。"},
+    {"stage": "科班異動修正公告", "date": "115年4月7日", "desc": "教育部核定修正中投區實用技能學程部分招生科班與班級調整，確認各校最終簡章公告版本。"},
+    {"stage": "各國中報名線上填報", "date": "115年5月14日(四) ～ 5月20日(三)", "desc": "應屆國中畢業生於就讀國中輔導室辦理報名，完成線上志願填報（每人至多選填 7 個志願），列印 A、B 報名表。"},
+    {"stage": "中投區集體與個別報名收件", "date": "115年5月21日(四) ～ 5月22日(五)", "desc": "各國中送件至主辦學校臺中家商辦理集體報名；非應屆畢業生與同等學力者辦理個別現場報名。"},
+    {"stage": "分發結果放榜", "date": "115年6月11日(四) 上午 10:00", "desc": "中投區分發作業小組於臺中家商網站及各招生學校官網統一放榜公告錄取名單。"},
+    {"stage": "申請成績複查截止", "date": "115年6月11日(四) 下午 17:00 前", "desc": "考生若對分發結果有疑義，於當日下午規定時間內向主辦學校臺中家商申請複查。"},
+    {"stage": "錄取學生現場報到", "date": "115年6月12日(五) 下午 14:00 ～ 16:00", "desc": "持國中畢業證書或同等學力證明正本至錄取學校辦理報到（各校如有彈性時間依各校錄取通知單為準）。"},
+    {"stage": "報到後聲明放棄錄取資格", "date": "115年6月15日(一) 中午 12:00 前", "desc": "錄取學生如欲參加後續免試入學或其他升學管道，須填具放棄錄取資格聲明書送達錄取學校。"},
+    {"stage": "各校續招公告與辦理", "date": "115年6月下旬起", "desc": "分發後仍有缺額之學校科班，報經主管教育機關核准後自行辦理單獨續招，至額滿為止。"}
+]
+
+# 報名資格、錄取方式與採計規準
+ADMISSION_SPECS = {
+    "qualification": [
+        "【學歷資格】：各公私立國民中學之應屆畢（結）業生、非應屆畢（結）業生或具備同等學力資格者均可報名。",
+        "【分發區域】：全國採免遷戶口自由跨區報名，但『全國每位考生限擇一分發區報名』，不得重複報考多個分發考區。",
+        "【會考規定】：★ 完全不採計國中教育會考成績！亦不設任何會考門檻，著重技術導向與適性就讀。",
+        "【志願選填】：每位學生最多可選填 7 個志願（一校一科為一個獨立志願）。"
+    ],
+    "admission_priority": [
+        {"level": "第 1 順位", "title": "曾選習國中技藝教育課程之『應屆』畢（結）業生", "desc": "最優先保障分發，凡國三曾參加國中技藝教育專案編班或合作式技藝班之應屆生優先分發。"},
+        {"level": "第 2 順位", "title": "曾選習國中技藝教育課程之『非應屆』畢（結）業生", "desc": "曾修習技藝教育之重考生或歷屆畢業生。"},
+        {"level": "第 3 順位", "title": "未曾選習國中技藝教育課程之『應屆』畢（結）業生", "desc": "一般國三應屆畢業生，未修習國中技藝教育者。"},
+        {"level": "第 4 順位", "title": "未曾選習國中技藝教育課程之『非應屆』畢業生或同等學力者", "desc": "一般非應屆學生或同等學力報名者。"}
+    ],
+    "score_calculation": {
+        "group_a": {
+            "name": "曾選習國中技藝教育課程者 (使用報名 A 表)",
+            "rules": [
+                "比序 1：技藝競賽或成果展獲獎且具『低收入戶』身分者優先錄取。",
+                "比序 2：參加各直轄市、縣（市）政府主辦之技藝競賽獲獎（第一名至佳作）或技藝教育成果展獲獎者。",
+                "比序 3：經濟弱勢身分優先順位（依序：低收入戶 > 中低收入戶）。",
+                "比序 4：職群成績轉化分數（依技藝教育修習證明書所載職群成績，換算 T 分數或對應等第分數）與修習職群時數點數積分。",
+                "比序 5：特殊表現優良積分（獎懲紀錄、服務學習、競賽表現）。",
+                "比序 6：選填之志願序先後。"
+            ]
+        },
+        "group_b": {
+            "name": "未曾選習國中技藝教育課程者 (使用報名 B 表)",
+            "rules": [
+                "比序 1：經濟弱勢身分優先（低收入戶 > 中低收入戶）。",
+                "比序 2：國民中學『綜合活動領域』前五學期平均成績 + 特殊表現總積分（兩者加總後依總分高低排序）。",
+                "比序 3：選填之志願序先後。"
+            ]
+        },
+        "extra_quota": [
+            "原住民生：每班依核定招生名額『外加 2%』計算（採小數點無條件進位，不占一般生名額）。",
+            "身心障礙生：每班依核定招生名額『外加 2%』計算，各校並另配合適性輔導安置名額留用。"
+        ]
+    }
+}
+
+def generate_csv(filepath):
+    """產出 CSV 表格 (帶 UTF-8 BOM 供 Excel 正常開啟)"""
+    with open(filepath, mode="w", encoding="utf-8-sig", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "分區縣市", "學校性質", "學校全銜", "學校簡稱", "地址", 
+            "招生科別", "所屬職群", "授課時段", "核定名額", "是否設水電科", 
+            "科系特色與設備亮點", "輔導專業證照"
+        ])
+        for row in SCHOOLS_DATA:
+            writer.writerow([
+                row["district"],
+                row["type"],
+                row["school"],
+                row["short_name"],
+                row["address"],
+                row["dept"],
+                row["cluster"],
+                row["shift"],
+                row["quota"],
+                "★ 是 (水電技術科)" if row["is_water_electric"] else "否",
+                row["features"],
+                row["certs"]
+            ])
+    print(f"✅ CSV 檔案生成成功: {filepath}")
+
+def generate_markdown(filepath):
+    """產出完整 Markdown 報告"""
+    md_lines = []
+    md_lines.append("# 115學年度全國高級中等學校中投區實用技能學程分發招生簡章深度彙編表")
+    md_lines.append("")
+    md_lines.append("> **主管機關核定文號**：教育部 115 年 1 月 15 日臺教授國字第 1155400269A 號函核定（115 年 4 月 7 日修正）  ")
+    md_lines.append("> **中投區主辦學校**：臺中市立臺中家事商業高級中等學校（臺中家商）  ")
+    md_lines.append("> **學程核心價值**：免學雜費補助、不採計國中教育會考、實作就業導向、銜接科技大學。  ")
+    md_lines.append("")
+    md_lines.append("---")
+    md_lines.append("")
+    md_lines.append("## 壹、中投區招生學校與科班彙整表 (依學校區分)")
+    md_lines.append("")
+    md_lines.append("| 縣市 | 屬性 | 招生學校 | 科別名稱 | 授課時段 | 職群 | 名額 | 水電科標記 | 輔導主要證照 |")
+    md_lines.append("|:---:|:---:|:---|:---|:---:|:---:|:---:|:---:|:---|")
+    for s in SCHOOLS_DATA:
+        water_tag = "**⚡水電技術科**" if s["is_water_electric"] else "-"
+        md_lines.append(f"| {s['district']} | {s['type']} | {s['short_name']} | **{s['dept']}** | {s['shift']} | {s['cluster']} | {s['quota']}名 | {water_tag} | {s['certs']} |")
+    
+    md_lines.append("")
+    md_lines.append("---")
+    md_lines.append("")
+    md_lines.append("## 貳、中投區開設【水電技術科】學校專題深剖")
+    md_lines.append("")
+    md_lines.append("在建築水電嚴重缺工、室內配線技師薪資水漲船高的趨勢下，中投區實用技能學程開設「水電技術科」的學校共有 **3 所**，各自具備鮮明特色與定位：")
+    md_lines.append("")
+
+    for idx, w in enumerate(WATER_ELECTRIC_SCHOOLS, 1):
+        md_lines.append(f"### {idx}. {w['school']} ── {w['dept']}")
+        md_lines.append(f"- **所在區域**：{w['district']}")
+        md_lines.append(f"- **學校型態**：{w['nature']}")
+        md_lines.append(f"- **招收名額**：{w['quota']}")
+        md_lines.append(f"- **專長優勢**：{w['advantages']}")
+        md_lines.append(f"- **產學合作與出路**：{w['industry_cooperation']}")
+        md_lines.append("- **核心課程規劃**：")
+        for c in w["curriculum_highlights"]:
+            md_lines.append(f"  * {c}")
+        md_lines.append("- **對應證照目標**：")
+        for lic in w["licenses"]:
+            md_lines.append(f"  * 🏆 {lic}")
+        md_lines.append("")
+
+    md_lines.append("---")
+    md_lines.append("")
+    md_lines.append("## 參、115學年度中投區實用技能學程重要日程表")
+    md_lines.append("")
+    md_lines.append("| 日程時間 | 作業項目階段 | 關鍵實施內容與應注意事項 |")
+    md_lines.append("|:---|:---|:---|")
+    for t in TIMELINE:
+        md_lines.append(f"| **{t['date']}** | **{t['stage']}** | {t['desc']} |")
+
+    md_lines.append("")
+    md_lines.append("---")
+    md_lines.append("")
+    md_lines.append("## 肆、報名資格、錄取方式與採計比序規準")
+    md_lines.append("")
+    md_lines.append("### 一、報名資格條件")
+    for q in ADMISSION_SPECS["qualification"]:
+        md_lines.append(f"- {q}")
+    
+    md_lines.append("")
+    md_lines.append("### 二、錄取分發優先順位 (四大順位)")
+    md_lines.append("分發時當某一校科報名人數超過其核定名額時，**嚴格按以下四大順位依序錄取**：")
+    md_lines.append("")
+    for p in ADMISSION_SPECS["admission_priority"]:
+        md_lines.append(f"1. **{p['level']}：{p['title']}**  \n   說明：{p['desc']}")
+    
+    md_lines.append("")
+    md_lines.append("### 三、同分超額比序與成績採計規準")
+    md_lines.append("")
+    md_lines.append(f"#### (一) {ADMISSION_SPECS['score_calculation']['group_a']['name']}")
+    for r in ADMISSION_SPECS["score_calculation"]["group_a"]["rules"]:
+        md_lines.append(f"- **{r}**")
+    
+    md_lines.append("")
+    md_lines.append(f"#### (二) {ADMISSION_SPECS['score_calculation']['group_b']['name']}")
+    for r in ADMISSION_SPECS["score_calculation"]["group_b"]["rules"]:
+        md_lines.append(f"- **{r}**")
+
+    md_lines.append("")
+    md_lines.append("#### (三) 外加名額採計")
+    for ex in ADMISSION_SPECS["score_calculation"]["extra_quota"]:
+        md_lines.append(f"- {ex}")
+
+    md_lines.append("")
+    md_lines.append("---")
+    md_lines.append("")
+    md_lines.append("## 伍、國三升學諮詢專家：實用技能學程志願選填錦囊與策略")
+    md_lines.append("""
+1. **志願最大化利用**：
+   - 每位考生擁有 **7 個志願**，強烈建議「填好填滿」。
+   - 若為曾選習國中技藝教育者（A表），因為處於第 1 順位，前 2~3 個志願應大膽選填公立高職（如臺中高工、興大附農、東勢高工、沙鹿高工）或私立熱門科（如青年水電、僑泰寵物）。
+2. **水電技術科選填定位**：
+   - 青年高中水電技術科為「日間部」，教學與證照體系極強，適合希望三年全日制高強度考取乙級證照並進軍科大的學生。
+   - 致用高中水電技術科適合海線學生，融合水電與冷凍空調多元技術。
+   - 東勢高工水電技術科為「夜間部」，適合半工半讀、提早進入工程行實務磨練的自立學生。
+3. **無技藝教育背景學生（B表）的致勝關鍵**：
+   - B表學生排在第 3 順位，公立學校日間部若在 A 表已額滿則較無機會。建議第 1、2 志願挑選招生容量較大、辦學優良之私立技術型高中優質科系，並於第 4~7 志願填寫公立夜間部或冷門科以確保保底錄取。
+4. **免試入學雙保險搭配**：
+   - 實用技能學程放榜為 **6月11日**，早於中投區大免試入學。若分發錄取且滿意該校科，可直接於 6月12日 報到完成升學；若不滿意，只要在 **6月15日 中午12:00 前**提出放棄，完全不影響後續參加中投區高級中等學校免試入學分發！
+""")
+
+    content = "\n".join(md_lines)
+    with open(filepath, mode="w", encoding="utf-8") as f:
+        f.write(content)
+    print(f"✅ Markdown 檔案生成成功: {filepath}")
+
+def generate_html(filepath):
+    """產出具備現代化 UI、篩選過濾、互動頁籤的 HTML Docu-Sheet (帶有精確時間戳記)"""
+    
+    schools_json = json.dumps(SCHOOLS_DATA, ensure_ascii=False)
+    water_schools_json = json.dumps(WATER_ELECTRIC_SCHOOLS, ensure_ascii=False)
+    timeline_json = json.dumps(TIMELINE, ensure_ascii=False)
+    
+    html_content = f"""<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>115學年度 中投區實用技能學程 招生簡章與水電科完整分析 Docu-Sheet</title>
+    <!-- Google Fonts & Tailwind CDN -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {{
+            theme: {{
+                extend: {{
+                    fontFamily: {{
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'monospace']
+                    }},
+                    colors: {{
+                        brand: {{
+                            50: '#eff6ff',
+                            100: '#dbeafe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            800: '#1e40af',
+                            900: '#1e3a8a'
+                        }}
+                    }}
+                }}
+            }}
+        }}
+    </script>
+    <style>
+        body {{
+            background-color: #f8fafc;
+            color: #1e293b;
+        }}
+        .tab-btn.active {{
+            background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+        }}
+        @media print {{
+            .no-print {{
+                display: none !important;
+            }}
+            .print-full {{
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }}
+        }}
+    </style>
+</head>
+<body class="font-sans antialiased bg-slate-50 min-h-screen">
+
+    <!-- 頂部導航列與全域時間戳規範標示 -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-blue-600 text-white p-2 rounded-xl shadow-md font-bold text-lg leading-none">
+                    PSP
+                </div>
+                <div>
+                    <h1 class="text-lg sm:text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        115學年度 中投區實用技能學程 招生簡章分析表
+                        <span class="text-xs bg-blue-100 text-blue-800 font-semibold px-2.5 py-0.5 rounded-full border border-blue-200">Docu-Sheet</span>
+                    </h1>
+                    <p class="text-xs text-slate-500">免試、不採計教育會考成績、重視技藝實作與證照養成</p>
+                </div>
+            </div>
+
+            <!-- 全域規則規範：右上方清晰小字標示當前更新日期時間與版本號 -->
+            <div class="flex items-center space-x-3">
+                <div class="text-right border-r border-slate-200 pr-3">
+                    <div class="inline-flex items-center gap-1.5 bg-slate-100 text-slate-700 text-xs font-mono font-bold px-2.5 py-1 rounded-md border border-slate-300">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                        v1.0 | 2026-11-12 11:55
+                    </div>
+                    <div class="text-[10px] text-slate-400">承辦學校：臺中市立臺中家商</div>
+                </div>
+                <button onclick="window.print()" class="no-print inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-900 text-white text-xs font-medium rounded-lg shadow transition">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+                    列印 / 存為PDF
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- 頂部快速重點摘要卡 -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3.5">
+                <div class="p-2.5 bg-blue-50 text-blue-600 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">成績採計特點</div>
+                    <div class="text-base font-bold text-slate-800">完全不看國中會考</div>
+                    <div class="text-[11px] text-emerald-600 font-medium">免試入學、免在校學業成績</div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3.5">
+                <div class="p-2.5 bg-amber-50 text-amber-600 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">水電技術科專設學校</div>
+                    <div class="text-base font-bold text-amber-600">中投區 3 所開設</div>
+                    <div class="text-[11px] text-slate-500">青年高中、致用高中、東勢高工</div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3.5">
+                <div class="p-2.5 bg-indigo-50 text-indigo-600 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">關鍵日程 (放榜與報到)</div>
+                    <div class="text-base font-bold text-slate-800">6/11放榜 ｜ 6/12報到</div>
+                    <div class="text-[11px] text-indigo-600 font-medium">早於免試入學分發作業</div>
+                </div>
+            </div>
+
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-start gap-3.5">
+                <div class="p-2.5 bg-purple-50 text-purple-600 rounded-lg">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+                </div>
+                <div>
+                    <div class="text-xs text-slate-500 font-medium">志願選填上限</div>
+                    <div class="text-base font-bold text-purple-700">最多可填 7 個志願</div>
+                    <div class="text-[11px] text-slate-500">一校一科為一志願，免遷戶籍</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 頁籤導覽列 (Tabs) -->
+        <div class="no-print bg-white p-1.5 rounded-xl border border-slate-200 shadow-sm flex flex-wrap gap-1 mb-6">
+            <button onclick="switchTab('tab-all')" id="btn-tab-all" class="tab-btn active px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition">
+                🏫 依學校區分名冊 (全科班明細)
+            </button>
+            <button onclick="switchTab('tab-water')" id="btn-tab-water" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition flex items-center gap-1.5">
+                ⚡ 開設水電科學校專區
+                <span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5 rounded-full">3校</span>
+            </button>
+            <button onclick="switchTab('tab-policy')" id="btn-tab-policy" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                📋 報名資格、錄取方式與採計
+            </button>
+            <button onclick="switchTab('tab-timeline')" id="btn-tab-timeline" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                📅 115年度重要日程表
+            </button>
+            <button onclick="switchTab('tab-strategy')" id="btn-tab-strategy" class="tab-btn px-4 py-2 rounded-lg text-xs sm:text-sm font-medium text-slate-600 hover:text-slate-900 transition">
+                💡 志願選填專家策略指南
+            </button>
+        </div>
+
+        <!-- TAB 1: 全學校與科班明細 (含即時互動搜尋與篩選) -->
+        <section id="tab-all" class="tab-pane block">
+            <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm mb-6">
+                <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 mb-5 pb-4 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900 flex items-center gap-2">
+                            <span>中投區實用技能學程 招生學校與科班總覽</span>
+                            <span id="record-count" class="text-xs bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md font-mono">共 33 筆班級</span>
+                        </h2>
+                        <p class="text-xs text-slate-500 mt-1">涵蓋臺中市（公立/私立）、南投縣（國立/私立）所有核定開辦實用技能學程之高中職學校</p>
+                    </div>
+
+                    <!-- 快速過濾控制項 -->
+                    <div class="no-print flex flex-wrap items-center gap-2.5 w-full lg:w-auto">
+                        <div class="relative flex-1 sm:w-64">
+                            <input type="text" id="searchInput" oninput="filterTable()" placeholder="搜尋學校、科系或關鍵字..." 
+                                class="w-full pl-9 pr-3 py-1.5 text-xs bg-slate-50 border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <svg class="w-4 h-4 text-slate-400 absolute left-2.5 top-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        </div>
+
+                        <select id="districtFilter" onchange="filterTable()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">全部分區縣市</option>
+                            <option value="臺中市">臺中市</option>
+                            <option value="南投縣">南投縣</option>
+                        </select>
+
+                        <select id="typeFilter" onchange="filterTable()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">公私立型態</option>
+                            <option value="市立">市立高職</option>
+                            <option value="國立">國立高職</option>
+                            <option value="私立">私立高職</option>
+                        </select>
+
+                        <select id="clusterFilter" onchange="filterTable()" class="text-xs bg-slate-50 border border-slate-300 rounded-lg px-2.5 py-1.5 focus:ring-2 focus:ring-blue-500">
+                            <option value="all">全部職群</option>
+                            <option value="電機與電子群">電機與電子群</option>
+                            <option value="機械群">機械群</option>
+                            <option value="餐旅群">餐旅群</option>
+                            <option value="食品群">食品群</option>
+                            <option value="動力機械群">動力機械群</option>
+                            <option value="商業與管理群">商業與管理群</option>
+                            <option value="農業">農業群/寵物</option>
+                            <option value="造型">家政與造型群</option>
+                        </select>
+
+                        <button onclick="toggleWaterFilter()" id="btn-water-toggle" class="px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold flex items-center gap-1 transition">
+                            ⚡ 僅看水電科
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 響應式資料表格 -->
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse" id="mainTable">
+                        <thead>
+                            <tr class="bg-slate-100 text-slate-700 uppercase font-bold text-[11px] border-b border-slate-200">
+                                <th class="py-3 px-3">縣市/屬性</th>
+                                <th class="py-3 px-3">招生學校全銜</th>
+                                <th class="py-3 px-3">招生科別</th>
+                                <th class="py-3 px-3">職群歸屬</th>
+                                <th class="py-3 px-2 text-center">時段</th>
+                                <th class="py-3 px-2 text-center">名額</th>
+                                <th class="py-3 px-3">特色規劃與實務訓練重點</th>
+                                <th class="py-3 px-3">主要輔導專業證照</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 text-slate-700" id="tableBody">
+                            <!-- Javascript 動態載入 -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: 水電技術科專區 (重點獨立展示) -->
+        <section id="tab-water" class="tab-pane hidden">
+            <div class="bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent p-5 rounded-2xl border border-amber-200 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-amber-500 text-white rounded-xl shadow-md">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-bold text-slate-900">115年度 中投區【水電技術科】深度特色專題</h2>
+                        <p class="text-xs text-slate-600 mt-0.5">水電工程為當前營造、室內裝修、智慧廠房最炙手可熱之高薪缺工技能。實用技能學程不看會考，三年免學費，直攻甲/乙種電匠與自來水管證照！</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 水電三校橫向對比卡片 -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8" id="waterCardsContainer">
+                <!-- Javascript 動態生成卡片 -->
+            </div>
+
+            <!-- 水電科考照進路與職涯地圖 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+                    水電技術科學生的核心證照階梯與未來出路
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="font-bold text-blue-700 mb-2 flex items-center gap-1.5">
+                            <span>📜 核心證照階梯</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li>• <strong>高一至高二</strong>：自來水管配管丙級、室內配線(屋內線路)丙級</li>
+                            <li>• <strong>高三目標</strong>：室內配線乙級（甲種電匠資格）、太陽光電設置乙級、冷凍空調裝修丙級</li>
+                            <li>• <strong>加值技能</strong>：工業配線丙級、網路架設丙級</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="font-bold text-emerald-700 mb-2 flex items-center gap-1.5">
+                            <span>💼 畢業就業市場優勢</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li>• <strong>就業起薪高</strong>：具備電匠與配管證照之學徒與半技工，日薪普遍優渥</li>
+                            <li>• <strong>獨立接案創業</strong>：累積現場經驗3~5年後，可申請水電工程承裝業執照獨立統包裝修</li>
+                            <li>• <strong>科技大廠機電</strong>：台積電、美光等半導體廠區之電力機電設施維護人員</li>
+                        </ul>
+                    </div>
+
+                    <div class="p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <div class="font-bold text-indigo-700 mb-2 flex items-center gap-1.5">
+                            <span>🎓 升學科技大學管道</span>
+                        </div>
+                        <ul class="space-y-1.5 text-slate-600">
+                            <li>• <strong>技優甄審入學</strong>：憑乙級證照最高享有甄審總分 15% 龐大加分</li>
+                            <li>• <strong>科技校院繁星計畫</strong>：推薦進入國立勤益科大、虎尾科大、雲科大等電機系</li>
+                            <li>• <strong>產學攜手專班</strong>：四技期間平日上班領全薪、週末或夜間修讀學士學位</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: 報名資格、錄取方式與採計規準 -->
+        <section id="tab-policy" class="tab-pane hidden">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+                <!-- 報名資格規範 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-900 pb-3 mb-4 border-b border-slate-100 flex items-center gap-2">
+                        <span class="p-1.5 bg-blue-100 text-blue-700 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                        </span>
+                        報名資格與限制條件
+                    </h3>
+                    <div class="space-y-3.5 text-xs text-slate-600">
+                        <div class="p-3 bg-slate-50 rounded-xl">
+                            <div class="font-bold text-slate-800 mb-1">1. 學歷對象</div>
+                            <p>公私立國民中學應屆畢業生、非應屆畢業生或具同等學力者皆可報名。</p>
+                        </div>
+                        <div class="p-3 bg-blue-50/70 border border-blue-100 rounded-xl">
+                            <div class="font-bold text-blue-900 mb-1">2. 會考成績限制（★最重要特點）</div>
+                            <p class="text-blue-800 font-medium">實用技能學程完全不採計國中教育會考成績，亦不設定會考最低門檻！不論會考成績如何，均不影響報名資格與分發成績。</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl">
+                            <div class="font-bold text-slate-800 mb-1">3. 全國分發區限制</div>
+                            <p>免遷戶籍即可跨區報名，但<strong>全國每位考生限報一個分發區</strong>，嚴禁重複報考多個考區。</p>
+                        </div>
+                        <div class="p-3 bg-slate-50 rounded-xl">
+                            <div class="font-bold text-slate-800 mb-1">4. 志願填報上限</div>
+                            <p>每位學生依個人興趣最多可選填 <strong>7 個志願</strong>（一所學校的一個科別計為一個志願）。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 錄取四大順位階梯 -->
+                <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                    <h3 class="text-sm font-bold text-slate-900 pb-3 mb-4 border-b border-slate-100 flex items-center gap-2">
+                        <span class="p-1.5 bg-emerald-100 text-emerald-700 rounded-lg">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+                        </span>
+                        分發錄取四大順位 (志願超額時之絕對優先次序)
+                    </h3>
+                    <div class="space-y-3 text-xs">
+                        <div class="p-3.5 bg-emerald-50 border-l-4 border-emerald-600 rounded-r-xl">
+                            <div class="font-bold text-emerald-900 flex items-center justify-between">
+                                <span>第 1 優先順位（絕對保障）</span>
+                                <span class="text-[10px] bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-full font-mono">優先錄取</span>
+                            </div>
+                            <p class="text-emerald-800 mt-1">曾選習國民中學「技藝教育課程」之<strong>應屆</strong>畢（結）業生。</p>
+                        </div>
+                        <div class="p-3.5 bg-blue-50 border-l-4 border-blue-600 rounded-r-xl">
+                            <div class="font-bold text-blue-900">第 2 優先順位</div>
+                            <p class="text-blue-800 mt-1">曾選習國民中學「技藝教育課程」之<strong>非應屆</strong>畢（結）業生。</p>
+                        </div>
+                        <div class="p-3.5 bg-amber-50 border-l-4 border-amber-600 rounded-r-xl">
+                            <div class="font-bold text-amber-900">第 3 優先順位</div>
+                            <p class="text-amber-800 mt-1">未曾選習國民中學「技藝教育課程」之<strong>應屆</strong>畢（結）業生。</p>
+                        </div>
+                        <div class="p-3.5 bg-slate-50 border-l-4 border-slate-400 rounded-r-xl">
+                            <div class="font-bold text-slate-800">第 4 優先順位</div>
+                            <p class="text-slate-600 mt-1">未曾選習國民中學「技藝教育課程」之<strong>非應屆</strong>畢業生或具同等學力者。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 同順位超額比序與採計規準 -->
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <h3 class="text-sm font-bold text-slate-900 mb-4 flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-indigo-600"></span>
+                    同一優先順位超額時之同分比序與成績採計規準
+                </h3>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    <!-- A表比序 -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                        <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-200">
+                            <span class="font-bold text-slate-900 text-sm">【報名 A 表】曾修習技藝教育者</span>
+                            <span class="bg-blue-100 text-blue-800 px-2 py-0.5 rounded text-[11px] font-medium">第 1、2 順位適用</span>
+                        </div>
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700">
+                            <li><strong>技藝競賽 + 弱勢優先</strong>：曾參加直轄市/縣市政府主辦技藝競賽或成果展獲獎，且具低收入戶身分者。</li>
+                            <li><strong>技藝競賽優良</strong>：曾參加縣市政府技藝競賽獲前六名或佳作者（按名次高低排序）。</li>
+                            <li><strong>經濟弱勢身分</strong>：低收入戶 > 中低收入戶。</li>
+                            <li><strong>職群綜合成績積分</strong>：依國中技藝教育修習證明書之成績轉化 T 分數、職群修習時數點數。</li>
+                            <li><strong>特殊表現優良積分</strong>：國中階段記功嘉獎紀錄、服務學習時數等表現。</li>
+                            <li><strong>志願序順位</strong>：依學生選填志願先後排序。</li>
+                        </ol>
+                    </div>
+
+                    <!-- B表比序 -->
+                    <div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50">
+                        <div class="flex items-center justify-between pb-2 mb-3 border-b border-slate-200">
+                            <span class="font-bold text-slate-900 text-sm">【報名 B 表】未曾修習技藝教育者</span>
+                            <span class="bg-amber-100 text-amber-800 px-2 py-0.5 rounded text-[11px] font-medium">第 3、4 順位適用</span>
+                        </div>
+                        <ol class="list-decimal list-inside space-y-2 text-slate-700">
+                            <li><strong>經濟弱勢身分</strong>：低收入戶 > 中低收入戶證明。</li>
+                            <li><strong>綜合活動領域成績 + 特殊表現</strong>：以國中綜合活動領域前五學期平均成績（折算積分）加上特殊表現總積分，按總分高低依序分發。</li>
+                            <li><strong>志願序順位</strong>：依學生選填志願先後排序。</li>
+                        </ol>
+                        <div class="mt-4 p-3 bg-amber-50 rounded-lg text-amber-800 text-[11px]">
+                            ⚠️ <strong>專家提醒</strong>：B表學生排在第3順位，在熱門公立日間科系通常會先被A表修過技藝教育的學生填滿，建議B表學生選填時務必將優質私立技術型高中或公立進修部納入保底。
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: 115年度重要日程表 -->
+        <section id="tab-timeline" class="tab-pane hidden">
+            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div class="flex items-center justify-between pb-4 mb-6 border-b border-slate-100">
+                    <div>
+                        <h2 class="text-base font-bold text-slate-900">115學年度 中投區實用技能學程重要日程表</h2>
+                        <p class="text-xs text-slate-500 mt-0.5">主辦單位：臺中市立臺中家商（依教育部核定公文彙整）</p>
+                    </div>
+                    <span class="text-xs bg-slate-100 text-slate-600 px-3 py-1 rounded-full font-mono">標準分發時程</span>
+                </div>
+
+                <div class="relative border-l-2 border-blue-200 ml-4 space-y-8" id="timelineContainer">
+                    <!-- Javascript 動態載入日程 -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: 志願選填錦囊與專家策略指南 -->
+        <section id="tab-strategy" class="tab-pane hidden">
+            <div class="space-y-6">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-md">
+                    <h2 class="text-lg font-bold mb-2">國三升學諮詢專家：中投區實用技能學程選填攻略</h2>
+                    <p class="text-xs text-blue-100 leading-relaxed">
+                        實用技能學程是一條完全「以實作為尊」的特色升學大道。不論國中在校學科如何，進入實用技能學程後享有國家全額學費補助，且能在三年內集中資源考取甲/乙種電匠、配管、烘焙、汽修等多張關鍵國家級證照！
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-blue-600"></span>
+                            A表學生（修過國中技藝教育）必勝策略
+                        </h3>
+                        <ul class="space-y-2.5 text-slate-600">
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-blue-600">1.</span>
+                                <span><strong>善用第 1 順位絕對優勢</strong>：A表應屆畢業生分發優先度最高。前 1~2 個志願可大膽填報明星公立高職（如臺中高工機械/電腦繪圖、興大附農烘焙/園藝）。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-blue-600">2.</span>
+                                <span><strong>同群科轉化加分效果</strong>：國中技藝教育所選修的職群若與選填科別對應（例如選修電機電子職群填報青年水電或東勢水電），其職群成績轉化與比序將具備極高優勢。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-blue-600">3.</span>
+                                <span><strong>7個志願完整梯次佈局</strong>：建議佈局為「2個夢幻衝刺 + 3個穩固熱門 + 2個安全保底」，確保百分之百順利分發至心儀學校。</span>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm">
+                        <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-amber-600"></span>
+                            B表學生（未修過國中技藝教育）務實選填
+                        </h3>
+                        <ul class="space-y-2.5 text-slate-600">
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-amber-600">1.</span>
+                                <span><strong>認清順位差距，精準鎖定私立名校</strong>：B表學生排在第 3 順位。公立日間部名額極易在 A 表前段被分發完畢，切勿 7 個志願全填公立日間部而導致全數落榜。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-amber-600">2.</span>
+                                <span><strong>鎖定私立指標科系</strong>：如青年高中（水電、餐飲、烘焙）、致用高中（水電、汽修）、僑泰高中（寵物、美顏、餐飲）、明台高中（寵物、烘焙），辦學能量充足且招生名額較寬裕。</span>
+                            </li>
+                            <li class="flex items-start gap-2">
+                                <span class="font-bold text-amber-600">3.</span>
+                                <span><strong>善用公立夜間部/進修部保底</strong>：如臺中家商夜間餐飲/烘焙、東勢高工夜間水電、臺中高工夜間機械，為 B 表學生進入公立高職的最佳捷徑。</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- 與大免試入學的銜接關鍵 -->
+                <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm text-xs">
+                    <h3 class="font-bold text-slate-900 text-sm mb-3 flex items-center gap-2 text-indigo-700">
+                        🔄 實用技能學程與中投區免試入學（大免）之雙軌連動規則
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-slate-600">
+                        <div class="p-3.5 bg-slate-50 rounded-xl">
+                            <div class="font-bold text-slate-800 mb-1">放榜早、提早安心</div>
+                            <p>實用技能學程於 <strong>6月11日</strong> 放榜，考生在國中畢業典禮前後即可得知是否錄取，若錄取滿意科系即可於 6月12日 完成報到，提早迎接暑假。</p>
+                        </div>
+                        <div class="p-3.5 bg-slate-50 rounded-xl">
+                            <div class="font-bold text-slate-800 mb-1">放棄期限與不影響大免</div>
+                            <p>若對分發結果不滿意，只要在 <strong>6月15日 中午12:00 前</strong> 填具「放棄錄取資格聲明書」送達錄取學校，即可全無罣礙地繼續參加後續中投區高級中等學校免試入學分發！</p>
+                        </div>
+                        <div class="p-3.5 bg-slate-50 rounded-xl">
+                            <div class="font-bold text-slate-800 mb-1">續招二度契機</div>
+                            <p>若實用技能學程各校報到後仍有缺額，各校會在 6 月下旬起辦理單獨續招，未錄取或中途想轉換跑道的學生可隨時關注學校官網直接報名。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="mt-12 bg-white border-t border-slate-200 py-6 text-center text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+            <div>115學年度全國高級中等學校中投區實用技能學程分發作業小組（承辦學校：臺中市立臺中家商）</div>
+            <div class="font-mono text-[11px] text-slate-400">網頁版本：v1.0 ｜ 發布時間：2026-11-12 11:55</div>
+        </div>
+    </footer>
+
+    <!-- 資料邏輯與互動腳本 -->
+    <script>
+        const rawSchools = {schools_json};
+        const waterSchools = {water_schools_json};
+        const timelineData = {timeline_json};
+
+        let filterOnlyWater = false;
+
+        // 渲染主表格
+        function renderTable(data) {{
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            document.getElementById('record-count').innerText = `共 ${{data.length}} 筆班級`;
+
+            if (data.length === 0) {{
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center py-8 text-slate-400">查無符合條件的學校或科別</td></tr>`;
+                return;
+            }}
+
+            data.forEach(item => {{
+                const tr = document.createElement('tr');
+                tr.className = "hover:bg-slate-50 transition border-b border-slate-100";
+                
+                const waterBadge = item.is_water_electric 
+                    ? `<span class="inline-flex items-center gap-1 bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded-full text-[10px] border border-amber-300">⚡ 水電技術科</span>`
+                    : '';
+
+                tr.innerHTML = `
+                    <td class="py-3 px-3 whitespace-nowrap">
+                        <span class="font-medium text-slate-900">${{item.district}}</span>
+                        <span class="text-[10px] ml-1 bg-slate-200 text-slate-700 px-1.5 py-0.5 rounded">${{item.type}}</span>
+                    </td>
+                    <td class="py-3 px-3">
+                        <div class="font-bold text-slate-900">${{item.school}}</div>
+                        <div class="text-[11px] text-slate-400">${{item.address}}</div>
+                    </td>
+                    <td class="py-3 px-3 whitespace-nowrap">
+                        <div class="font-bold text-blue-700 flex items-center gap-1.5">
+                            ${{item.dept}}
+                            ${{waterBadge}}
+                        </div>
+                    </td>
+                    <td class="py-3 px-3 whitespace-nowrap">
+                        <span class="bg-blue-50 text-blue-700 px-2 py-0.5 rounded font-medium text-[11px]">${{item.cluster}}</span>
+                    </td>
+                    <td class="py-3 px-2 text-center whitespace-nowrap">
+                        <span class="px-2 py-0.5 rounded text-[11px] ${{item.shift.includes('日間') ? 'bg-emerald-50 text-emerald-700 font-medium' : 'bg-purple-50 text-purple-700'}}">
+                            ${{item.shift}}
+                        </span>
+                    </td>
+                    <td class="py-3 px-2 text-center font-mono font-bold text-slate-800 whitespace-nowrap">
+                        ${{item.quota}}
+                    </td>
+                    <td class="py-3 px-3 text-slate-600 max-w-xs">
+                        ${{item.features}}
+                    </td>
+                    <td class="py-3 px-3 text-slate-500 text-[11px]">
+                        ${{item.certs}}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            }});
+        }}
+
+        // 渲染水電專區卡片
+        function renderWaterCards() {{
+            const container = document.getElementById('waterCardsContainer');
+            container.innerHTML = '';
+
+            waterSchools.forEach(w => {{
+                const card = document.createElement('div');
+                card.className = "bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col justify-between hover:border-amber-400 transition hover:shadow-md";
+
+                let highlightsHtml = w.curriculum_highlights.map(h => `<li class="flex items-start gap-1.5 text-slate-600"><span class="text-amber-500 font-bold">•</span><span>${{h}}</span></li>`).join('');
+                let licensesHtml = w.licenses.map(l => `<span class="inline-block bg-amber-50 text-amber-800 text-[11px] font-semibold px-2 py-1 rounded border border-amber-200">${{l}}</span>`).join('');
+
+                card.innerHTML = `
+                    <div>
+                        <div class="flex items-start justify-between gap-2 mb-3">
+                            <span class="bg-amber-100 text-amber-800 text-[11px] font-bold px-2.5 py-0.5 rounded-full">⚡ 水電技術科</span>
+                            <span class="text-xs text-slate-500">${{w.district}}</span>
+                        </div>
+                        <h3 class="text-base font-bold text-slate-900">${{w.school}}</h3>
+                        <div class="text-xs font-semibold text-blue-700 mb-2">${{w.dept}} ｜ ${{w.quota}}</div>
+                        <p class="text-xs text-slate-500 mb-4 bg-slate-50 p-2.5 rounded-lg border border-slate-100">${{w.advantages}}</p>
+
+                        <div class="mb-4">
+                            <div class="text-xs font-bold text-slate-800 mb-2">專業培育核心課程：</div>
+                            <ul class="text-xs space-y-1.5">${{highlightsHtml}}</ul>
+                        </div>
+                    </div>
+
+                    <div class="pt-4 border-t border-slate-100">
+                        <div class="text-xs font-bold text-slate-800 mb-2">主要檢定輔導證照：</div>
+                        <div class="flex flex-wrap gap-1.5 mb-3">${{licensesHtml}}</div>
+                        <div class="text-[11px] text-slate-500 bg-amber-50/50 p-2 rounded border border-amber-100">
+                            <strong>產學合作：</strong>${{w.industry_cooperation}}
+                        </div>
+                    </div>
+                `;
+                container.appendChild(card);
+            }});
+        }}
+
+        // 渲染日程
+        function renderTimeline() {{
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = '';
+
+            timelineData.forEach((t, i) => {{
+                const item = document.createElement('div');
+                item.className = "relative pl-6 group";
+                item.innerHTML = `
+                    <div class="absolute -left-[9px] top-1 w-4 h-4 rounded-full bg-white border-2 border-blue-600 group-hover:scale-125 transition"></div>
+                    <div class="text-xs font-mono font-bold text-blue-600 mb-0.5">${{t.date}}</div>
+                    <h3 class="text-sm font-bold text-slate-900 mb-1">${{t.stage}}</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed">${{t.desc}}</p>
+                `;
+                container.appendChild(item);
+            }});
+        }}
+
+        // 篩選主表格
+        function filterTable() {{
+            const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+            const districtVal = document.getElementById('districtFilter').value;
+            const typeVal = document.getElementById('typeFilter').value;
+            const clusterVal = document.getElementById('clusterFilter').value;
+
+            const filtered = rawSchools.filter(item => {{
+                const matchSearch = !searchVal || 
+                    item.school.toLowerCase().includes(searchVal) ||
+                    item.short_name.toLowerCase().includes(searchVal) ||
+                    item.dept.toLowerCase().includes(searchVal) ||
+                    item.cluster.toLowerCase().includes(searchVal) ||
+                    item.features.toLowerCase().includes(searchVal) ||
+                    item.certs.toLowerCase().includes(searchVal);
+
+                const matchDistrict = (districtVal === 'all') || (item.district === districtVal);
+                const matchType = (typeVal === 'all') || (item.type === typeVal);
+                const matchCluster = (clusterVal === 'all') || (item.cluster.includes(clusterVal));
+                const matchWater = !filterOnlyWater || item.is_water_electric;
+
+                return matchSearch && matchDistrict && matchType && matchCluster && matchWater;
+            }});
+
+            renderTable(filtered);
+        }}
+
+        function toggleWaterFilter() {{
+            filterOnlyWater = !filterOnlyWater;
+            const btn = document.getElementById('btn-water-toggle');
+            if (filterOnlyWater) {{
+                btn.className = "px-2.5 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-semibold flex items-center gap-1 shadow-sm transition";
+                btn.innerHTML = "⚡ 正在查看水電科 (點擊取消)";
+            }} else {{
+                btn.className = "px-2.5 py-1.5 bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-300 rounded-lg text-xs font-semibold flex items-center gap-1 transition";
+                btn.innerHTML = "⚡ 僅看水電科";
+            }}
+            filterTable();
+        }}
+
+        // 頁籤切換
+        function switchTab(tabId) {{
+            document.querySelectorAll('.tab-pane').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {{
+                btn.classList.remove('active');
+                btn.classList.add('text-slate-600');
+            }});
+
+            const targetPane = document.getElementById(tabId);
+            if (targetPane) targetPane.classList.remove('hidden');
+
+            const activeBtn = document.getElementById('btn-' + tabId);
+            if (activeBtn) {{
+                activeBtn.classList.add('active');
+                activeBtn.classList.remove('text-slate-600');
+            }}
+        }}
+
+        // 初始化
+        window.addEventListener('DOMContentLoaded', () => {{
+            renderTable(rawSchools);
+            renderWaterCards();
+            renderTimeline();
+        }});
+    </script>
+</body>
+</html>
+"""
+    with open(filepath, mode="w", encoding="utf-8") as f:
+        f.write(html_content)
+    print(f"✅ HTML Docu-Sheet 生成成功: {filepath}")
+
+if __name__ == "__main__":
+    workspace = r"G:\我的雲端硬碟\antigravity2026 test\志願選填分析"
+    csv_path = os.path.join(workspace, "115學年度_中投區實用技能學程_招生學校與科班明細表.csv")
+    md_path = os.path.join(workspace, "115學年度_中投區實用技能學程_招生簡章深度彙編表.md")
+    html_path = os.path.join(workspace, "115學年度_中投區實用技能學程_招生簡章完整彙整分析表.html")
+
+    generate_csv(csv_path)
+    generate_markdown(md_path)
+    generate_html(html_path)
+    print("🎉 所有產出檔案已完全就緒！")
